@@ -100,7 +100,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         ax.set_theta_direction(1)
         ax.set_ylim(0, 90)  # Altitude 0° (horizon) to 90° (zenith)
         ax.set_rmax(90)
-        ax.set_rticks([0, 15, 30, 45, 60, 75, 90])  # Altitude rings
+        ax.set_rticks(self._rticks)  # Altitude rings
         ax.set_rlabel_position(225)  # Move radial labels # type: ignore
         ax.set_rgrids(self._rticks, labels=self._rtick_labels, fontsize=12)
         ax.grid(True)
