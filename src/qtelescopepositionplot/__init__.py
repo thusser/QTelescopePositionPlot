@@ -12,7 +12,14 @@ from matplotlib.projections.polar import PolarAxes
 
 
 class QTelescopePositionPlot(FigureCanvasQTAgg):
-    def __init__(self, location: EarthLocation, rticks: tuple[float] | None = None, history: int = 100):
+    def __init__(
+        self,
+        location: EarthLocation,
+        rticks: tuple[float] | None = None,
+        history: int = 100,
+        color_current: str | None = None,
+        color_target: str | None = None,
+    ):
         # create plot
         self.fig, self.ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(6, 6), dpi=60)
 
@@ -26,6 +33,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._telescope_location = location
         self._history = history
         self._historic_data: list[AltAz] = []
+        self._color_current = color_current
+        self._color_target = color_target
 
         # ticks along altitude axis
         self._rticks = rticks if rticks is not None else (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0)
@@ -56,6 +65,10 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         now = Time.now()
         pal = QPalette()
 
+        # colors
+        color_current = self._color_current if self._color_current else pal.highlight().color().name()
+        color_target = self._color_target if self._color_target else pal.light().color().name()
+
         # draw current position
         # needs az is in radians, and zenith distance in degrees
         self.ax.scatter(
@@ -65,7 +78,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             marker=MarkerStyle("o"),
             s=150,
             facecolors="none",
-            edgecolors=pal.highlight().color().name(),
+            edgecolors=color_current,
         )
 
         # is there any history?
@@ -75,7 +88,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
                 np.radians(history.az.degree),
                 90 - history.alt.degree,
                 label="Telescope",
-                color=pal.highlight().color().name(),
+                color=color_current,
                 alpha=0.4,
             )
 
@@ -90,7 +103,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             np.pi / 180 * target.az.degree,
             90 - target.alt.degree,
             label="Target",
-            color=pal.light().color().name(),
+            color=color_target,
             marker=MarkerStyle("+"),
             s=200,
         )
@@ -106,7 +119,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
                 np.pi / 180 * target.az.value,
                 90 - target.alt.value,
                 label="Path +5h",
-                color=pal.light().color().name(),
+                color=color_target,
                 alpha=0.4,
             )
 
