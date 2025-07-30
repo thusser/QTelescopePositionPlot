@@ -19,6 +19,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         history: int = 100,
         color_current: str | None = None,
         color_target: str | None = None,
+        marker_current: str = "o",
+        marker_target: str = "+",
     ):
         # create plot
         self.fig, self.ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(6, 6), dpi=60)
@@ -35,6 +37,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._historic_data: list[AltAz] = []
         self._color_current = color_current
         self._color_target = color_target
+        self._marker_current = marker_current
+        self._marker_target = marker_target
 
         # ticks along altitude axis
         self._rticks = rticks if rticks is not None else (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0)
@@ -75,7 +79,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             np.radians(self._current_position.az.degree),
             90 - self._current_position.alt.degree,
             label="Telescope",
-            marker=MarkerStyle("o"),
+            marker=MarkerStyle(self._marker_current),
             s=150,
             facecolors="none",
             edgecolors=color_current,
@@ -104,7 +108,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             90 - target.alt.degree,
             label="Target",
             color=color_target,
-            marker=MarkerStyle("+"),
+            marker=MarkerStyle(self._marker_target),
             s=200,
         )
 
