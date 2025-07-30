@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
 
     def stop(self) -> None:
         self.target = self.current
+        self.plot.set_target_position(self.target)
 
     def move_altaz(self) -> None:
         self.target = SkyCoord(
