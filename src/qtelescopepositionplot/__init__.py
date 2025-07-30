@@ -12,7 +12,7 @@ from matplotlib.projections.polar import PolarAxes
 
 
 class QTelescopePositionPlot(FigureCanvasQTAgg):
-    def __init__(self, location: EarthLocation, rticks: tuple[float] | None = None):
+    def __init__(self, location: EarthLocation, rticks: tuple[float] | None = None, history: int = 100):
         # create plot
         self.fig, self.ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(6, 6), dpi=60)
 
@@ -24,7 +24,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._current_position = AltAz(az=0.0 * u.deg, alt=90.0 * u.deg)
         self._target_position = SkyCoord(az=0.0 * u.deg, alt=90.0 * u.deg, frame="altaz")
         self._telescope_location = location
-        self._history: list[AltAz] = []
+        self._history = history
+        self._historic_data: list[AltAz] = []
 
         # ticks along altitude axis
         self._rticks = rticks if rticks is not None else (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0)
@@ -40,9 +41,9 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
 
     def set_current_position(self, coords: AltAz) -> None:
         self._current_position = coords
-        self._history.append(SkyCoord(az=coords.az, alt=coords.alt, frame="altaz"))
-        while len(self._history) > 100:
-            self._history.pop(0)
+        self._historic_data.append(AltAz(az=coords.az, alt=coords.alt))
+        while len(self._historic_data) > self._history:
+            self._historic_data.pop(0)
         self._update_plot()
 
     def set_target_position(self, coords: SkyCoord) -> None:
@@ -68,8 +69,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         )
 
         # is there any history?
-        if len(self._history) > 0:
-            history = SkyCoord(self._history)
+        if len(self._historic_data) > 0:
+            history = SkyCoord(self._historic_data)
             self.ax.plot(
                 np.radians(history.az.degree),
                 90 - history.alt.degree,
