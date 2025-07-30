@@ -24,6 +24,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._current_position = AltAz(az=0.0 * u.deg, alt=90.0 * u.deg)
         self._target_position = SkyCoord(az=0.0 * u.deg, alt=90.0 * u.deg, frame="altaz")
         self._telescope_location = location
+        self._history: list[AltAz] = []
 
         # ticks along altitude axis
         self._rticks = rticks if rticks is not None else (0.0, 15.0, 30.0, 45.0, 60.0, 75.0, 90.0)
@@ -39,6 +40,9 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
 
     def set_current_position(self, coords: AltAz) -> None:
         self._current_position = coords
+        self._history.append(SkyCoord(az=coords.az, alt=coords.alt, frame="altaz"))
+        while len(self._history) > 100:
+            self._history.pop(0)
         self._update_plot()
 
     def set_target_position(self, coords: SkyCoord) -> None:
@@ -62,6 +66,17 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             facecolors="none",
             edgecolors=pal.highlight().color().name(),
         )
+
+        # is there any history?
+        if len(self._history) > 0:
+            history = SkyCoord(self._history)
+            self.ax.plot(
+                np.radians(history.az.degree),
+                90 - history.alt.degree,
+                label="Telescope",
+                color=pal.highlight().color().name(),
+                alpha=0.4,
+            )
 
         # is the current target position AltAz or RaDec?
         if hasattr(self._target_position, "alt"):
