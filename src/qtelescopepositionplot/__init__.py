@@ -1,5 +1,18 @@
 import sys
 from typing import cast, Any
+
+if sys.modules.get("PyQt6.QtCore"):
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QSizePolicy
+elif sys.modules.get("PySide6.QtCore"):
+    from PySide6.QtGui import QPalette
+    from PySide6.QtWidgets import QSizePolicy
+elif sys.modules.get("PyQt5.QtCore"):
+    from PyQt5.QtGui import QPalette
+    from PyQt5.QtWidgets import QSizePolicy
+elif sys.modules.get("PySide2.QtCore"):
+    from PySide2.QtGui import QPalette
+    from PySide2.QtWidgets import QSizePolicy
 from astropy.coordinates import SkyCoord, AltAz, EarthLocation
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
@@ -22,8 +35,6 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         marker_current: str = "o",
         marker_target: str = "+",
     ):
-        # QWidget.__init__(self, parent=parent)
-
         # create plot
         self.fig, self.ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(6, 6), dpi=60)
 
@@ -51,9 +62,16 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
             ]
         )
 
+        # keep it square
+        policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
         # plot!
-        print("plot")
         self._update_plot()
+
+    def heightForWidth(self, width: int):
+        return width
 
     def set_current_position(self, coords: AltAz) -> None:
         self._current_position = coords
@@ -67,15 +85,6 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._update_plot()
 
     def _update_plot(self) -> None:
-        if sys.modules.get("PyQt6.QtCore"):
-            from PyQt6.QtGui import QPalette
-        elif sys.modules.get("PySide6.QtCore"):
-            from PySide6.QtGui import QPalette
-        elif sys.modules.get("PyQt5.QtCore"):
-            from PyQt5.QtGui import QPalette
-        elif sys.modules.get("PySide2.QtCore"):
-            from PySide2.QtGui import QPalette
-
         # get some values and clear plot
         self.ax.clear()
         now = Time.now()
