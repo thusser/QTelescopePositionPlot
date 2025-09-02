@@ -167,4 +167,3 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
 
         # update plot
         self.draw()
-        print("done")
