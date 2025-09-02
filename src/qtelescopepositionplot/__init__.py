@@ -1,8 +1,7 @@
-from typing import cast
-
-from PyQt5.QtGui import QPalette
+import sys
+from typing import cast, Any
 from astropy.coordinates import SkyCoord, AltAz, EarthLocation
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 import matplotlib.pyplot as plt
 from astropy.time import Time
 import astropy.units as u
@@ -14,7 +13,8 @@ from matplotlib.projections.polar import PolarAxes
 class QTelescopePositionPlot(FigureCanvasQTAgg):
     def __init__(
         self,
-        location: EarthLocation,
+        parent: Any | None = None,
+        location: EarthLocation | None = None,
         rticks: tuple[float] | None = None,
         history: int = 100,
         color_current: str | None = None,
@@ -22,6 +22,8 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         marker_current: str = "o",
         marker_target: str = "+",
     ):
+        # QWidget.__init__(self, parent=parent)
+
         # create plot
         self.fig, self.ax = plt.subplots(subplot_kw={"projection": "polar"}, figsize=(6, 6), dpi=60)
 
@@ -30,9 +32,9 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self.setContentsMargins(0, 0, 0, 0)
 
         # store stuff
+        self.location = location if location is not None else EarthLocation(0.0 * u.deg, 0.0 * u.deg)
         self._current_position = AltAz(az=0.0 * u.deg, alt=90.0 * u.deg)
         self._target_position = SkyCoord(az=0.0 * u.deg, alt=90.0 * u.deg, frame="altaz")
-        self._telescope_location = location
         self._history = history
         self._historic_data: list[AltAz] = []
         self._color_current = color_current
@@ -50,6 +52,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         )
 
         # plot!
+        print("plot")
         self._update_plot()
 
     def set_current_position(self, coords: AltAz) -> None:
@@ -64,6 +67,15 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         self._update_plot()
 
     def _update_plot(self) -> None:
+        if sys.modules.get("PyQt6.QtCore"):
+            from PyQt6.QtGui import QPalette
+        elif sys.modules.get("PySide6.QtCore"):
+            from PySide6.QtGui import QPalette
+        elif sys.modules.get("PyQt5.QtCore"):
+            from PyQt5.QtGui import QPalette
+        elif sys.modules.get("PySide2.QtCore"):
+            from PySide2.QtGui import QPalette
+
         # get some values and clear plot
         self.ax.clear()
         now = Time.now()
@@ -100,7 +112,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         if hasattr(self._target_position, "alt"):
             target = self._target_position
         else:
-            target = self._target_position.transform_to(AltAz(obstime=Time.now(), location=self._telescope_location))
+            target = self._target_position.transform_to(AltAz(obstime=Time.now(), location=self.location))
 
         # plot current target position
         self.ax.scatter(
@@ -116,7 +128,7 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
         if hasattr(self._target_position, "ra"):
             # calculate positions for 5 hours into the future
             times = now + np.linspace(0, 5, 100) * u.hour
-            target = self._target_position.transform_to(AltAz(obstime=times, location=self._telescope_location))
+            target = self._target_position.transform_to(AltAz(obstime=times, location=self.location))
 
             # plot it
             self.ax.plot(
@@ -146,3 +158,4 @@ class QTelescopePositionPlot(FigureCanvasQTAgg):
 
         # update plot
         self.draw()
+        print("done")
